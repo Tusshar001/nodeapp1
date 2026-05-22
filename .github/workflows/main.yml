@@ -1,0 +1,26 @@
+name: Deploy Node.js App
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2HOST }}
+          username: ${{ secrets.EC2USER }}
+          key: ${{ secrets.SSHKEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # Load nvm if used
+            cd /home/ubuntu/deploy/nodeapp
+            git pull origin main
+            npm install
+            pm2 restart hello-world-app || pm2 start index.js --name "hello-world-app"
